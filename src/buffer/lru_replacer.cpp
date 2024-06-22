@@ -14,7 +14,7 @@
 
 namespace bustub {
 
-LRUReplacer::LRUReplacer(size_t num_pages) {}
+LRUReplacer::LRUReplacer(size_t num_pages) { capacity_ = num_pages; }
 
 LRUReplacer::~LRUReplacer() = default;
 
@@ -24,6 +24,9 @@ void LRUReplacer::Pin(frame_id_t frame_id) {}
 
 void LRUReplacer::Unpin(frame_id_t frame_id) {}
 
-auto LRUReplacer::Size() -> size_t { return 0; }
+auto LRUReplacer::Size() -> size_t {
+  std::scoped_lock<std::mutex> lock{latch_};
+  return hashmap_frame_.size();
+}
 
 }  // namespace bustub
