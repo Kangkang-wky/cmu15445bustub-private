@@ -36,7 +36,7 @@ namespace bustub {
  * classical LRU algorithm is used to choose victim.
  *
  * 经典的缓存驱逐策略有：
- * FIFO 先进先出驱逐 
+ * FIFO 先进先出驱逐
  * LRU  最近最久未被访问驱逐
  * LRU_K : 按照 k-distance 定义, 每次驱逐 k-distance 最大的 frame
  * 考虑以下两种情况

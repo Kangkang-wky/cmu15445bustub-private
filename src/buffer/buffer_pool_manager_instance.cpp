@@ -55,9 +55,8 @@ auto BufferPoolManagerInstance::NewPgImp(page_id_t *page_id) -> Page * {
   if (!free_list_.empty()) {
     frame_id = free_list_.front();
     free_list_.pop_front();
-  }
-  // free list 为空, 需要考虑进行驱逐策略, 若驱逐成功
-  else if (replacer_->Evict(&frame_id)) {
+  } else if (replacer_->Evict(&frame_id)) {
+    // free list 为空, 需要考虑进行驱逐策略, 若驱逐成功
     page_id_t page_evict = pages_[frame_id].GetPageId();
 
     // 如果驱逐的 page 是 is_dirty 的
@@ -74,9 +73,8 @@ auto BufferPoolManagerInstance::NewPgImp(page_id_t *page_id) -> Page * {
     // page_table_ 可扩展哈希移除 page_evict 部分
     page_table_->Remove(page_evict);
 
-  }
-  // 上述两个条件皆不满足
-  else {
+  } else {
+    // 上述两个条件皆不满足
     return nullptr;
   }
 
@@ -104,11 +102,12 @@ auto BufferPoolManagerInstance::FetchPgImp(page_id_t page_id) -> Page * {
 
   frame_id_t frame_id;
 
-  // 在 page_table 中能够找到
+  // 在 page_table 中能够找到, 找到即返回
   if (page_table_->Find(page_id, frame_id)) {
     pages_[frame_id].pin_count_++;
     replacer_->RecordAccess(frame_id);
     replacer_->SetEvictable(frame_id, false);
+    return &pages_[frame_id];
   }
 
   // 在 page_table 中找不到, 从 disk 上读取, 做法与 new 类似
@@ -117,9 +116,8 @@ auto BufferPoolManagerInstance::FetchPgImp(page_id_t page_id) -> Page * {
   if (!free_list_.empty()) {
     frame_id = free_list_.front();
     free_list_.pop_front();
-  }
-  // free list 为空, 需要考虑进行驱逐策略, 若驱逐成功
-  else if (replacer_->Evict(&frame_id)) {
+  } else if (replacer_->Evict(&frame_id)) {
+    // free list 为空, 需要考虑进行驱逐策略, 若驱逐成功
     page_id_t page_evict = pages_[frame_id].GetPageId();
 
     // 如果驱逐的 page 是 is_dirty 的
@@ -135,9 +133,8 @@ auto BufferPoolManagerInstance::FetchPgImp(page_id_t page_id) -> Page * {
 
     // page_table_ 可扩展哈希移除 page_evict 记录
     page_table_->Remove(page_evict);
-  }
-  // 上述两个条件皆不满足
-  else {
+  } else {
+    // 上述两个条件皆不满足
     return nullptr;
   }
 
@@ -170,15 +167,17 @@ auto BufferPoolManagerInstance::UnpinPgImp(page_id_t page_id, bool is_dirty) -> 
     return false;
   }
 
-  if (pages_[frame_id].GetPinCount() == 0) {
+  if (pages_[frame_id].GetPinCount() <= 0) {
     return false;
+  }
+
+  // is dirty
+  if (is_dirty) {
+    pages_[frame_id].is_dirty_ = is_dirty;
   }
 
   // unpin
   pages_[frame_id].pin_count_--;
-
-  // is dirty
-  pages_[frame_id].is_dirty_ = is_dirty ? is_dirty : !is_dirty;
 
   if (pages_[frame_id].GetPinCount() == 0) {
     replacer_->SetEvictable(frame_id, true);
@@ -206,7 +205,7 @@ auto BufferPoolManagerInstance::FlushPgImp(page_id_t page_id) -> bool {
 }
 
 void BufferPoolManagerInstance::FlushAllPgsImp() {
-  for (int i = 0; i < this->pool_size_; i++) {
+  for (size_t i = 0; i < pool_size_; i++) {
     FlushPgImp(pages_[i].GetPageId());
   }
 }
@@ -223,9 +222,6 @@ auto BufferPoolManagerInstance::DeletePgImp(page_id_t page_id) -> bool {
   if (pages_[frame_id].GetPinCount() > 0) {
     return false;
   }
-
-  // can found & pin count == 0
-  disk_manager_->WritePage(page_id, pages_[frame_id].data_);
 
   // replacer & free_list & page_table
   replacer_->Remove(frame_id);

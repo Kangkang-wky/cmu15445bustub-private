@@ -103,9 +103,8 @@ void LRUKReplacer::RecordAccess(frame_id_t frame_id) {
       history_list_.push_front(frame_id);
       history_hashmap_[frame_id] = history_list_.begin();
     }
-  }
-  // 以前出现过, 这种情况 curr_size_ 保持原来得大小
-  else {
+  } else {
+    // 以前出现过, 这种情况 curr_size_ 保持原来得大小
     current_timestamp_++;
     record_cnt_[frame_id]++;
     // is_evictable_[frame_id] = false; 以前出现过 is_evictable 表不更新
@@ -120,9 +119,8 @@ void LRUKReplacer::RecordAccess(frame_id_t frame_id) {
       // 从 cache list 中添加
       cache_list_.push_front(frame_id);
       cache_hashmap_[frame_id] = cache_list_.begin();
-    }
-    // 访问超过了 k 次
-    else if (record_cnt_[frame_id] > k_) {
+    } else if (record_cnt_[frame_id] > k_) {
+      // 访问超过了 k 次
       if (cache_hashmap_.count(frame_id) != 0) {
         cache_list_.erase(cache_hashmap_[frame_id]);
       }
@@ -153,9 +151,8 @@ void LRUKReplacer::SetEvictable(frame_id_t frame_id, bool set_evictable) {
   // 之前不 evict 现在可 evict
   if (!pre_evictable && set_evictable) {
     curr_size_++;
-  }
-  // 之前可 evict 现在不可 evict
-  else if (pre_evictable && !set_evictable) {
+  } else if (pre_evictable && !set_evictable) {
+    // 之前可 evict 现在不可 evict
     curr_size_--;
   }
 }
@@ -178,9 +175,8 @@ void LRUKReplacer::Remove(frame_id_t frame_id) {
   if (record_cnt_[frame_id] < k_) {
     history_list_.erase(history_hashmap_[frame_id]);
     history_hashmap_.erase(frame_id);
-  }
-  // 如果 record_cnt_ >= k
-  else {
+  } else {
+    // 如果 record_cnt_ >= k
     cache_list_.erase(cache_hashmap_[frame_id]);
     cache_hashmap_.erase(frame_id);
   }
